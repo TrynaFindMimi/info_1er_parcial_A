@@ -23,11 +23,9 @@ class App(arcade.View):
     def __init__(self):
         super().__init__()
         self.background = arcade.load_texture("assets/img/background3.png")
-        # crear espacio de pymunk
         self.space = pymunk.Space()
         self.space.gravity = (0, GRAVITY)
 
-        # agregar piso
         floor_body = pymunk.Body(body_type=pymunk.Body.STATIC)
         floor_shape = pymunk.Segment(floor_body, [0, 15], [WIDTH, 15], 0.0)
         floor_shape.friction = 10
@@ -39,12 +37,10 @@ class App(arcade.View):
         self.add_columns()
         self.add_pigs()
 
-        self.start_point = Point2D()
-        self.end_point = Point2D()
-        self.distance = 0
+        self.fixed_start = Point2D(50, 20)
+        self.end_point = Point2D(200, 100)
         self.draw_line = False
 
-        # agregar un collision handler
         self.handler = self.space.add_default_collision_handler()
         self.handler.post_solve = self.collision_handler
 
@@ -73,7 +69,7 @@ class App(arcade.View):
         self.world.append(pig1)
 
     def on_update(self, delta_time: float):
-        self.space.step(1 / 60.0)  # actualiza la simulacion de las fisicas
+        self.space.step(1 / 60.0)
         self.update_collisions()
         self.sprites.update(delta_time)
 
@@ -82,10 +78,9 @@ class App(arcade.View):
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
-            self.start_point = Point2D(x, y)
             self.end_point = Point2D(x, y)
             self.draw_line = True
-            logger.debug(f"Start Point: {self.start_point}")
+            logger.debug(f"Start Point: {self.fixed_start}")
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
         if buttons == arcade.MOUSE_BUTTON_LEFT:
@@ -96,19 +91,52 @@ class App(arcade.View):
         if button == arcade.MOUSE_BUTTON_LEFT:
             logger.debug(f"Releasing from: {self.end_point}")
             self.draw_line = False
-            impulse_vector = get_impulse_vector(self.start_point, self.end_point)
-            bird = Bird("assets/img/red-bird3.png", impulse_vector, x, y, self.space)
+            impulse_vector = get_impulse_vector(self.fixed_start, self.end_point)
+            bird = Bird("assets/img/red-bird3.png", impulse_vector, self.fixed_start.x, self.fixed_start.y, self.space, power_multiplier=60)  # power_multiplier aumentado
             self.sprites.append(bird)
             self.birds.append(bird)
 
+    def calculate_trajectory(self, start_point, end_point, steps=50):
+        from game_logic import get_impulse_vector
+        impulse_vector = get_impulse_vector(start_point, end_point)
+        g = -GRAVITY
+        mass = 5
+        power_multiplier = 60  
+        max_impulse = 100
+        impulse = min(max_impulse, impulse_vector.impulse) * power_multiplier
+        angle = impulse_vector.angle
+        v0 = impulse / mass
+        vx = v0 * math.cos(angle)
+        vy = v0 * math.sin(angle)
+        points = []
+        t_total = 2 * vy / g if g != 0 else 1
+        t_total = max(t_total, 0.5)
+        for i in range(steps):
+            t = t_total * i / steps
+            x = start_point.x + vx * t
+            y = start_point.y + vy * t - 0.5 * g * t * t
+            if y < 15:
+                y = 15
+                points.append((x, y))
+                break
+            points.append((x, y))
+        return points
+
     def on_draw(self):
         self.clear()
-        # arcade.draw_lrwh_rectangle_textured(0, 0, WIDTH, HEIGHT, self.background)
         arcade.draw_texture_rect(self.background, arcade.LRBT(0, WIDTH, 0, HEIGHT))
         self.sprites.draw()
+        arcade.draw_line(0, 15, WIDTH, 15, arcade.color.DARK_BROWN, 4)
         if self.draw_line:
-            arcade.draw_line(self.start_point.x, self.start_point.y, self.end_point.x, self.end_point.y,
-                             arcade.color.BLACK, 3)
+            trajectory = self.calculate_trajectory(self.fixed_start, self.end_point, steps=50)
+            if len(trajectory) > 1:
+                for i in range(len(trajectory) - 1):
+                    if i % 2 == 0:
+                        arcade.draw_line(
+                            trajectory[i][0], trajectory[i][1],
+                            trajectory[i+1][0], trajectory[i+1][1],
+                            arcade.color.GRAY, 2
+                        )
 
 
 def main():

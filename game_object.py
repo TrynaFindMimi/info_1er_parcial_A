@@ -5,10 +5,7 @@ from game_logic import ImpulseVector
 
 
 class Bird(arcade.Sprite):
-    """
-    Bird class. This represents an angry bird. All the physics is handled by Pymunk,
-    the init method only set some initial properties
-    """
+    
     def __init__(
         self,
         image_path: str,
@@ -19,7 +16,7 @@ class Bird(arcade.Sprite):
         mass: float = 5,
         radius: float = 12,
         max_impulse: float = 100,
-        power_multiplier: float = 50,
+        power_multiplier: float = 30,  
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
@@ -46,9 +43,6 @@ class Bird(arcade.Sprite):
         self.shape = shape
 
     def update(self, delta_time):
-        """
-        Update the position of the bird sprite based on the physics body position
-        """
         self.center_x = self.shape.body.position.x
         self.center_y = self.shape.body.position.y
         self.radians = self.shape.body.angle
@@ -84,9 +78,7 @@ class Pig(arcade.Sprite):
 
 
 class PassiveObject(arcade.Sprite):
-    """
-    Passive object that can interact with other objects.
-    """
+
     def __init__(
         self,
         image_path: str,
