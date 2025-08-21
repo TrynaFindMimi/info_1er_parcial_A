@@ -17,6 +17,9 @@ WIDTH = 1800
 HEIGHT = 800
 TITLE = "Angry birds"
 GRAVITY = -900
+FLOOR_Y = 120        # altura superior del piso (top surface)
+FLOOR_HEIGHT = 300   # alto del rectángulo del piso
+FLOOR_COLOR = (60, 179, 113)  # verde agradable
 
 
 class App(arcade.View):
@@ -26,10 +29,19 @@ class App(arcade.View):
         self.space = pymunk.Space()
         self.space.gravity = (0, GRAVITY)
 
+        # Piso como cuerpo estático tipo caja (impide atravesar)
         floor_body = pymunk.Body(body_type=pymunk.Body.STATIC)
-        floor_shape = pymunk.Segment(floor_body, [0, 15], [WIDTH, 15], 0.0)
-        floor_shape.friction = 10
+        # posicionar el centro de la caja para que su borde superior esté en FLOOR_Y
+        floor_center_y = FLOOR_Y - FLOOR_HEIGHT / 2
+        floor_body.position = (WIDTH / 2, floor_center_y)
+        floor_shape = pymunk.Poly.create_box(floor_body, (WIDTH, FLOOR_HEIGHT))
+        floor_shape.friction = 10.0
+        floor_shape.elasticity = 0.0
+        floor_shape.collision_type = 1
         self.space.add(floor_body, floor_shape)
+
+        self.floor_body = floor_body
+        self.floor_shape = floor_shape
 
         self.sprites = arcade.SpriteList()
         self.birds = arcade.SpriteList()
@@ -37,7 +49,8 @@ class App(arcade.View):
         self.add_columns()
         self.add_pigs()
 
-        self.fixed_start = Point2D(50, 20)
+        # inicio de la parábola ligeramente por encima de la superficie del piso
+        self.fixed_start = Point2D(50, FLOOR_Y + 18)
         self.end_point = Point2D(200, 100)
         self.draw_line = False
 
@@ -59,19 +72,33 @@ class App(arcade.View):
 
     def add_columns(self):
         for x in range(WIDTH // 2, WIDTH, 400):
-            column = Column(x, 50, self.space)
+            # colocar columnas sobre el piso
+            column = Column(x, FLOOR_Y + 80, self.space)
             self.sprites.append(column)
             self.world.append(column)
 
     def add_pigs(self):
-        pig1 = Pig(WIDTH / 2, 100, self.space)
-        self.sprites.append(pig1)
-        self.world.append(pig1)
+        # Estructura de cerdos en forma triangular
+        # Cerdo base izquierdo
+        pig1 = Pig(WIDTH / 2 - 30, FLOOR_Y + 70, self.space)
+        # Cerdo base derecho
+        pig2 = Pig(WIDTH / 2 + 30, FLOOR_Y + 70, self.space)
+        # Cerdo superior
+        pig3 = Pig(WIDTH / 2, FLOOR_Y + 120, self.space)
+        
+        for pig in [pig1, pig2, pig3]:
+            self.sprites.append(pig)
+            self.world.append(pig)
 
     def on_update(self, delta_time: float):
         self.space.step(1 / 60.0)
         self.update_collisions()
         self.sprites.update(delta_time)
+        
+        for bird in self.birds[:]:
+            if getattr(bird, 'should_remove', False):
+                bird.remove_from_sprite_lists()
+                self.space.remove(bird.shape, bird.body)
 
     def update_collisions(self):
         pass
@@ -115,8 +142,9 @@ class App(arcade.View):
             t = t_total * i / steps
             x = start_point.x + vx * t
             y = start_point.y + vy * t - 0.5 * g * t * t
-            if y < 15:
-                y = 15
+            
+            if y < FLOOR_Y:
+                y = FLOOR_Y
                 points.append((x, y))
                 break
             points.append((x, y))
@@ -125,8 +153,15 @@ class App(arcade.View):
     def on_draw(self):
         self.clear()
         arcade.draw_texture_rect(self.background, arcade.LRBT(0, WIDTH, 0, HEIGHT))
+        
+        arcade.draw_lrbt_rectangle_filled(
+            0,                         
+            WIDTH,                     
+            FLOOR_Y - FLOOR_HEIGHT,    
+            FLOOR_Y,                   
+            FLOOR_COLOR
+        )
         self.sprites.draw()
-        arcade.draw_line(0, 15, WIDTH, 15, arcade.color.DARK_BROWN, 4)
         if self.draw_line:
             trajectory = self.calculate_trajectory(self.fixed_start, self.end_point, steps=50)
             if len(trajectory) > 1:

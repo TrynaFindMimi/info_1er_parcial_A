@@ -42,10 +42,21 @@ class Bird(arcade.Sprite):
         self.body = body
         self.shape = shape
 
+        self.time_low_energy = 0
+        self.should_remove = False
+
     def update(self, delta_time):
         self.center_x = self.shape.body.position.x
         self.center_y = self.shape.body.position.y
         self.radians = self.shape.body.angle
+        
+        velocity = self.body.velocity.length
+        if velocity < 20:  
+            self.time_low_energy += delta_time
+            if self.time_low_energy >= 3.0: 
+                self.should_remove = True
+        else:
+            self.time_low_energy = 0
 
 
 class Pig(arcade.Sprite):
