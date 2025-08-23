@@ -3,9 +3,9 @@ import logging
 import arcade
 import pymunk
 from game_logic import get_impulse_vector, Point2D
-from characters.red_bird import RedBird
-from characters.blue_bird import BlueBird
-from characters.yellow_bird import YellowBird
+from characters.redBird import RedBird
+from characters.blueBird import BlueBird
+from characters.yellowBird import YellowBird
 from characters.pig import Pig
 from objects.column import Column
 from objects.sling import Sling
