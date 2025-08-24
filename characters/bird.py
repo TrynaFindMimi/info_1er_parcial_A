@@ -18,10 +18,12 @@ class Bird(arcade.Sprite):
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
-        static: bool = False,  # Agrega el parámetro static
+        static: bool = False,
     ):
-        super().__init__(image_path, 1)
-        # Crea el cuerpo y la forma con la opción static
+        
+        super().__init__(image_path, 0.1) 
+    
+        
         body_type = pymunk.Body.STATIC if static else pymunk.Body.DYNAMIC
         moment = pymunk.moment_for_circle(mass, 0, radius) if not static else float('inf')
         body = pymunk.Body(mass, moment, body_type=body_type)
@@ -34,7 +36,7 @@ class Bird(arcade.Sprite):
         self.body = body
         self.shape = shape
 
-        if not static:  # Aplica el impulso solo si no es estático
+        if not static:
             impulse = min(max_impulse, impulse_vector.impulse) * power_multiplier
             impulse_pymunk = impulse * pymunk.Vec2d(1, 0)
             self.body.apply_impulse_at_local_point(impulse_pymunk.rotated(impulse_vector.angle))
@@ -55,5 +57,5 @@ class Bird(arcade.Sprite):
             self.time_low_energy = 0
 
     def activate_special(self):
-        """Método para efectos especiales, implementado por subclases."""
+        
         pass

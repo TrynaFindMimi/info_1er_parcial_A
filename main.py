@@ -12,14 +12,12 @@ from objects.passiveObject import PassiveObject
 from objects.sling import Sling
 from level.levels import load_level
 
-# Configuración de logging
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("arcade").setLevel(logging.WARNING)
 logging.getLogger("pymunk").setLevel(logging.WARNING)
 logging.getLogger("PIL").setLevel(logging.WARNING)
 logger = logging.getLogger("main")
 
-# Constantes
 WIDTH = 1800
 HEIGHT = 800
 TITLE = "Angry Birds"
@@ -31,14 +29,10 @@ FLOOR_COLOR = (60, 179, 113)
 class App(arcade.View):
     def __init__(self):
         super().__init__()
-        # Fondo
         self.background = arcade.load_texture("assets/img/background3.png")
-        
-        # Física
         self.space = pymunk.Space()
         self.space.gravity = (0, GRAVITY)
         
-        # Piso
         floor_body = pymunk.Body(body_type=pymunk.Body.STATIC)
         floor_center_y = FLOOR_Y - FLOOR_HEIGHT / 2
         floor_body.position = (WIDTH / 2, floor_center_y)
@@ -50,33 +44,27 @@ class App(arcade.View):
         self.floor_body = floor_body
         self.floor_shape = floor_shape
         
-        # Sprites
         self.sprites = arcade.SpriteList()
         self.birds = arcade.SpriteList()
         self.world = arcade.SpriteList()
         
-        # Niveles
         self.current_level = 1
         self.load_level(self.current_level)
         
-        # Cola de pájaros
         self.bird_queue = [RedBird, BlueBird, YellowBird]
         self.current_bird_index = 0
         
-        # Lanzamiento
-        self.fixed_start = Point2D(250, FLOOR_Y + 25)
+        self.fixed_start = Point2D(200, FLOOR_Y + 25)
         self.end_point = Point2D(200, 100)
         self.draw_line = False
         
-        # Manejador de colisiones
         self.handler = self.space.add_default_collision_handler()
         self.handler.post_solve = self.collision_handler
         
-        # Estado de pausa
         self.paused = False
+        self.score = 0
 
     def load_level(self, level_id):
-        """Carga un nivel desde level/level_{level_id}.py"""
         self.sprites.clear()
         self.birds.clear()
         self.world.clear()
@@ -93,12 +81,13 @@ class App(arcade.View):
         impulse_norm = arbiter.total_impulse.length
         if impulse_norm < 100:
             return True
-        print(f"Collision impulse: {impulse_norm}")  # Para depuración
+        print(f"Collision impulse: {impulse_norm}")
         if impulse_norm > 1200:
             for obj in self.world[:]:
                 if obj.shape in arbiter.shapes:
-                    obj.remove_from_sprite_lists()  # Esto ya remueve de self.world
+                    obj.remove_from_sprite_lists()
                     self.space.remove(obj.shape, obj.body)
+                    self.score += 100
         return True
 
     def on_update(self, delta_time: float):
@@ -107,13 +96,12 @@ class App(arcade.View):
             self.sprites.update(delta_time)
             for bird in self.birds[:]:
                 if getattr(bird, 'should_remove', False):
-                    bird.remove_from_sprite_lists()  # Esto ya remueve de self.birds
+                    bird.remove_from_sprite_lists()
                     self.space.remove(bird.shape, bird.body)
-            # Verifica si no quedan objetos en el mundo y avanza al siguiente nivel
-            if not self.world:  # Si no quedan objetos en el mundo
-                if self.birds:  # Si aún hay pájaros, completa el nivel
+            if not self.world:
+                if self.birds:
                     self.next_level()
-                elif not self.birds:  # Si no hay pájaros ni objetos, avanza
+                elif not self.birds:
                     self.next_level()
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -138,7 +126,6 @@ class App(arcade.View):
                 self.sprites.append(bird)
                 self.birds.append(bird)
                 self.current_bird_index += 1
-                # Remover el pájaro estático inicial
                 for sprite in self.birds[:]:
                     if getattr(sprite, 'static', False):
                         sprite.remove_from_sprite_lists()
@@ -184,17 +171,18 @@ class App(arcade.View):
         if self.draw_line:
             trajectory = self.calculate_trajectory(self.fixed_start, self.end_point, steps=50)
             if len(trajectory) > 1:
-                for i in range(len(trajectory) - 1):
-                    if i % 2 == 0:
-                        arcade.draw_line(
-                            trajectory[i][0], trajectory[i][1],
-                            trajectory[i + 1][0], trajectory[i + 1][1],
-                            arcade.color.GRAY, 2
-                        )
-            # Dibujar líneas elásticas desde la honda
-            for sprite in self.sprites:
-                if isinstance(sprite, Sling):
-                    sprite.draw_elastic(self.fixed_start, self.end_point)
+                for i in range(min(30, len(trajectory))):
+                    point = trajectory[i]
+                    alpha_value = int(255 * (1 - i / 30))
+                    color = (128, 128, 128, alpha_value)
+                    arcade.draw_circle_filled(point[0], point[1], 1.5, color)
+        
+        arcade.draw_text(
+            f"Score: {self.score}",
+            10, HEIGHT - 30,
+            arcade.color.WHITE, 24
+        )
+        
         if self.paused:
             arcade.draw_text("PAUSED", WIDTH / 2, HEIGHT / 2, arcade.color.WHITE, 50, anchor_x="center")
 
