@@ -18,6 +18,7 @@ logging.getLogger("pymunk").setLevel(logging.WARNING)
 logging.getLogger("PIL").setLevel(logging.WARNING)
 logger = logging.getLogger("game")
 
+# Constantes del juego
 WIDTH = 1800
 HEIGHT = 800
 GRAVITY = -900
@@ -26,43 +27,67 @@ FLOOR_HEIGHT = 300
 FLOOR_COLOR = (60, 179, 113)
 
 class App(arcade.View):
+    """
+    Clase principal del juego Angry Birds, que maneja toda la lógica,
+    física y rendering.
+    """
     def __init__(self):
         super().__init__()
-        print("Entering App __init__...")
         self.game_init()
 
     def game_init(self):
-        try:
-            self.background = arcade.load_texture("assets/img/background3.png")
-            self.space = pymunk.Space()
-            self.space.gravity = (0, GRAVITY)
-            floor_body = pymunk.Body(body_type=pymunk.Body.STATIC)
-            floor_center_y = FLOOR_Y - FLOOR_HEIGHT / 2
-            floor_body.position = (WIDTH / 2, floor_center_y)
-            floor_shape = pymunk.Poly.create_box(floor_body, (WIDTH, FLOOR_HEIGHT))
-            floor_shape.friction = 10.0
-            floor_shape.elasticity = 0.0
-            floor_shape.collision_type = 1
-            self.space.add(floor_body, floor_shape)
-            self.floor_body = floor_body
-            self.floor_shape = floor_shape
-            self.sprites = arcade.SpriteList()
-            self.birds = arcade.SpriteList()
-            self.world = arcade.SpriteList()
-            self.current_level = 1
-            self.load_level(self.current_level)
-            self.bird_queue = [RedBird, BlueBird, YellowBird]
-            self.current_bird_index = 0
-            self.fixed_start = Point2D(200, FLOOR_Y + 25)
-            self.end_point = Point2D(200, 100)
-            self.draw_line = False
-            self.handler = self.space.add_default_collision_handler()
-            self.handler.post_solve = self.collision_handler
-            self.paused = False
-            self.score = 0
-        except Exception as e:
-            logger.error(f"Initialization error: {e}")
-            print(f"Initialization error: {e}")
+        """
+        Configura todas las variables y objetos del juego.
+        Esta función se llama al inicio y cada vez que se reinicia un nivel.
+        """
+        self.background = arcade.load_texture("assets/img/background3.png")
+
+        # Inicializa el espacio de PyMunk para la física
+        self.space = pymunk.Space()
+        self.space.gravity = (0, GRAVITY)
+        
+        # Configura el suelo estático
+        floor_body = pymunk.Body(body_type=pymunk.Body.STATIC)
+        floor_center_y = FLOOR_Y - FLOOR_HEIGHT / 2
+        floor_body.position = (WIDTH / 2, floor_center_y)
+        floor_shape = pymunk.Poly.create_box(floor_body, (WIDTH, FLOOR_HEIGHT))
+        floor_shape.friction = 10.0
+        floor_shape.elasticity = 0.0
+        floor_shape.collision_type = 1
+        self.space.add(floor_body, floor_shape)
+        self.floor_body = floor_body
+        self.floor_shape = floor_shape
+        
+        # Listas de sprites para organizar los objetos del juego
+        self.sprites = arcade.SpriteList()
+        self.birds = arcade.SpriteList()
+        self.world = arcade.SpriteList()
+        
+        # Configuración del nivel
+        self.current_level = 1
+        self.load_level(self.current_level)
+        
+        # ----- CÓDIGO MODIFICADO AQUÍ -----
+        # Cola de pájaros y su estado actual (YellowBird, RedBird, BlueBird)
+        self.bird_queue = [YellowBird, RedBird, BlueBird]
+        self.current_bird_index = 0
+        
+        # Puntos para la catapulta y la línea de trayectoria
+        self.fixed_start = Point2D(200, FLOOR_Y + 25)
+        self.end_point = Point2D(200, 100)
+        self.draw_line = False
+        
+        # Manejador de colisiones para detectar impactos
+        self.handler = self.space.add_default_collision_handler()
+        self.handler.post_solve = self.collision_handler
+        
+        # Estado del juego
+        self.paused = False
+        self.score = 0
+        
+        # Variables para el control de lanzamiento
+        self.can_launch_bird = True
+        self.is_bird_in_air = False
 
     def load_level(self, level_id):
         self.sprites.clear()
@@ -76,7 +101,6 @@ class App(arcade.View):
             elif isinstance(obj, (RedBird, BlueBird, YellowBird)):
                 self.birds.append(obj)
         self.current_bird_index = 0
-        print(f"Level {level_id} loaded successfully...")
 
     def collision_handler(self, arbiter, space, data):
         impulse_norm = arbiter.total_impulse.length
@@ -92,9 +116,16 @@ class App(arcade.View):
         return True
 
     def on_update(self, delta_time: float):
+        """Actualiza la posición de los sprites y la física."""
         if not self.paused:
             self.space.step(1 / 60.0)
             self.sprites.update(delta_time)
+            
+            # Revisa si el pájaro actual ha aterrizado
+            if not self.birds or self.birds[-1].body.velocity.length < 50 or self.birds[-1].center_y < -100:
+                self.can_launch_bird = True
+                self.is_bird_in_air = False
+            
             for bird in self.birds[:]:
                 if getattr(bird, 'should_remove', False):
                     bird.remove_from_sprite_lists()
@@ -106,24 +137,32 @@ class App(arcade.View):
                     self.next_level()
 
     def on_mouse_press(self, x, y, button, modifiers):
-        """Maneja el clic del ratón para iniciar el lanzamiento y activar habilidad especial."""
+        """
+        Maneja el clic del ratón: inicia el lanzamiento si se puede,
+        o activa la habilidad especial si el pájaro está en el aire.
+        """
         if button == arcade.MOUSE_BUTTON_LEFT and not self.paused:
-            self.end_point = Point2D(x, y)
-            self.draw_line = True
-            logger.debug(f"Start Point: {self.fixed_start}")
-            # Activar especial si el pájaro actual es BlueBird y está en vuelo
-            if self.birds and isinstance(self.birds[-1], BlueBird) and self.birds[-1].body.velocity.length > 0:
+            # Caso 1: Se puede lanzar un pájaro (primer clic)
+            if self.can_launch_bird:
+                self.end_point = Point2D(x, y)
+                self.draw_line = True
+                logger.debug(f"Start Point: {self.fixed_start}")
+            
+            # Caso 2: El pájaro está en el aire, activa la habilidad (segundo clic)
+            elif self.is_bird_in_air and self.birds:
                 self.birds[-1].activate_special()
+                # Desactiva la habilidad después de usarla
+                self.is_bird_in_air = False
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
         """Maneja el arrastre del ratón para apuntar."""
-        if buttons == arcade.MOUSE_BUTTON_LEFT and not self.paused:
+        if self.can_launch_bird and buttons == arcade.MOUSE_BUTTON_LEFT and not self.paused:
             self.end_point = Point2D(x, y)
             logger.debug(f"Dragging to: {self.end_point}")
 
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int):
         """Maneja la liberación del ratón para lanzar el pájaro."""
-        if button == arcade.MOUSE_BUTTON_LEFT and not self.paused:
+        if self.can_launch_bird and button == arcade.MOUSE_BUTTON_LEFT and not self.paused:
             logger.debug(f"Releasing from: {self.end_point}")
             self.draw_line = False
             if self.current_bird_index < len(self.bird_queue):
@@ -133,21 +172,16 @@ class App(arcade.View):
                 self.sprites.append(bird)
                 self.birds.append(bird)
                 self.current_bird_index += 1
+                self.can_launch_bird = False
+                self.is_bird_in_air = True # El pájaro está en el aire
                 for sprite in self.birds[:]:
                     if getattr(sprite, 'static', False):
                         sprite.remove_from_sprite_lists()
                         self.space.remove(sprite.shape, sprite.body)
                         break
-
-    def on_key_press(self, key, modifiers):
-        """Maneja la pulsación de teclas para activar habilidades especiales."""
-        if key == arcade.key.SPACE and self.birds and not self.paused:
-            self.birds[-1].activate_special()
-
+    
     def calculate_trajectory(self, start_point, end_point, steps=50):
-        """
-        Calcula la trayectoria del pájaro para dibujar la línea de puntos.
-        """
+        """Calcula la trayectoria del pájaro para dibujar la línea de puntos."""
         impulse_vector = get_impulse_vector(start_point, end_point)
         g = -GRAVITY
         mass = 5
@@ -212,6 +246,6 @@ class App(arcade.View):
         try:
             self.load_level(self.current_level)
         except FileNotFoundError:
-            # Puedes mostrar un mensaje de fin de juego aquí
-            arcade.draw_text("GAME COMPLETED!", WIDTH / 2, HEIGHT / 2, arcade.color.WHITE, 50, anchor_x="center")
+            # Muestra el mensaje de fin del juego
+            arcade.draw_text("¡Juego completado!", WIDTH / 2, HEIGHT / 2, arcade.color.WHITE, 50, anchor_x="center")
             self.paused = True
