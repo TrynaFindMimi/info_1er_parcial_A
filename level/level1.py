@@ -8,7 +8,7 @@ def get_objects(space):
     """Devuelve los sprites para el nivel 1 (estructura triangular)."""
     objects = [
         # Honda al extremo izquierdo
-        Sling(space, x=50, y=138),
+        Sling(space, x=200, y=138),
         # Pájaro inicial en la honda
         RedBird(impulse_vector=None, x=50, y=138, space=space, power_multiplier=0, static=True),
         # Estructura triangular

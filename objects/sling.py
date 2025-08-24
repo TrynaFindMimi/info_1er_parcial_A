@@ -14,17 +14,17 @@ class Sling(arcade.Sprite):
         super().draw()
 
     def draw_elastic(self, start_point: Point2D, end_point: Point2D):
-        """Dibuja las líneas elásticas de la honda desde start_point a end_point."""
-        # Línea elástica frontal (desde start_point a end_point)
+        """Dibuja las líneas elásticas de la honda desde start_point a end_point (tensión hacia el pájaro)."""
+        # Línea elástica frontal (desde el punto fijo hacia el punto del ratón)
         arcade.draw_line(
             start_point.x, start_point.y,
             end_point.x, end_point.y,
-            arcade.color.BROWN, 4
+            arcade.color.RED, 4  # Línea roja para simular la liga
         )
-        # Línea elástica trasera (simulada, ligeramente desplazada)
-        offset_x, offset_y = 10, 0  # Desplazamiento para la segunda cuerda
+        # Línea elástica trasera (desplazada ligeramente para simular tensión)
+        offset_x, offset_y = (end_point.x - start_point.x) * 0.1, (end_point.y - start_point.y) * 0.1  # Desplazamiento proporcional
         arcade.draw_line(
-            start_point.x - offset_x, start_point.y - offset_y,
+            start_point.x + offset_x, start_point.y + offset_y,
             end_point.x, end_point.y,
-            arcade.color.BROWN, 4
+            arcade.color.RED, 4
         )

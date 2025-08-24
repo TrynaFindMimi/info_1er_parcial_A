@@ -64,7 +64,7 @@ class App(arcade.View):
         self.current_bird_index = 0
         
         # Lanzamiento
-        self.fixed_start = Point2D(50, FLOOR_Y + 18)
+        self.fixed_start = Point2D(250, FLOOR_Y + 25)
         self.end_point = Point2D(200, 100)
         self.draw_line = False
         
@@ -93,11 +93,11 @@ class App(arcade.View):
         impulse_norm = arbiter.total_impulse.length
         if impulse_norm < 100:
             return True
-        logger.debug(f"Collision impulse: {impulse_norm}")
+        print(f"Collision impulse: {impulse_norm}")  # Para depuración
         if impulse_norm > 1200:
             for obj in self.world[:]:
                 if obj.shape in arbiter.shapes:
-                    obj.remove_from_sprite_lists()
+                    obj.remove_from_sprite_lists()  # Esto ya remueve de self.world
                     self.space.remove(obj.shape, obj.body)
         return True
 
@@ -107,10 +107,14 @@ class App(arcade.View):
             self.sprites.update(delta_time)
             for bird in self.birds[:]:
                 if getattr(bird, 'should_remove', False):
-                    bird.remove_from_sprite_lists()
+                    bird.remove_from_sprite_lists()  # Esto ya remueve de self.birds
                     self.space.remove(bird.shape, bird.body)
-            if not self.world and self.birds:  # Nivel completado
-                self.next_level()
+            # Verifica si no quedan objetos en el mundo y avanza al siguiente nivel
+            if not self.world:  # Si no quedan objetos en el mundo
+                if self.birds:  # Si aún hay pájaros, completa el nivel
+                    self.next_level()
+                elif not self.birds:  # Si no hay pájaros ni objetos, avanza
+                    self.next_level()
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT and not self.paused:
