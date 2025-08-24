@@ -13,7 +13,7 @@ class Pig(arcade.Sprite):
         friction: float = 0.4,
         collision_layer: int = 0,
     ):
-        super().__init__("assets/img/pig_failed.png", 0.1)
+        super().__init__("assets/img/pig_failed.png", 0.15)
         radius = self.width / 2 - 3
         self.body, self.shape = create_circle_body_and_shape(
             space, mass, radius, (x, y), elasticity, friction, collision_layer
