@@ -18,14 +18,27 @@ class Bird(arcade.Sprite):
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
+        static: bool = False,  # Agrega el parámetro static
     ):
         super().__init__(image_path, 1)
-        self.body, self.shape = create_circle_body_and_shape(
-            space, mass, radius, (x, y), elasticity, friction, collision_layer
-        )
-        impulse = min(max_impulse, impulse_vector.impulse) * power_multiplier
-        impulse_pymunk = impulse * pymunk.Vec2d(1, 0)
-        self.body.apply_impulse_at_local_point(impulse_pymunk.rotated(impulse_vector.angle))
+        # Crea el cuerpo y la forma con la opción static
+        body_type = pymunk.Body.STATIC if static else pymunk.Body.DYNAMIC
+        moment = pymunk.moment_for_circle(mass, 0, radius) if not static else float('inf')
+        body = pymunk.Body(mass, moment, body_type=body_type)
+        body.position = (x, y)
+        shape = pymunk.Circle(body, radius)
+        shape.elasticity = elasticity
+        shape.friction = friction
+        shape.collision_type = collision_layer
+        space.add(body, shape)
+        self.body = body
+        self.shape = shape
+
+        if not static:  # Aplica el impulso solo si no es estático
+            impulse = min(max_impulse, impulse_vector.impulse) * power_multiplier
+            impulse_pymunk = impulse * pymunk.Vec2d(1, 0)
+            self.body.apply_impulse_at_local_point(impulse_pymunk.rotated(impulse_vector.angle))
+        
         self.time_low_energy = 0
         self.should_remove = False
 

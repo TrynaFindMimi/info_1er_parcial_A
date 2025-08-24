@@ -14,7 +14,7 @@ class PassiveObject(arcade.Sprite):
         friction: float = 1,
         collision_layer: int = 0,
     ):
-        super().__init__(image_path, 1)
+        super().__init__("assets/img/beam.png", 1)
         self.body, self.shape = create_box_body_and_shape(
             space, mass, (self.width, self.height), (x, y), elasticity, friction, collision_layer
         )

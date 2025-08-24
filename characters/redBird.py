@@ -14,6 +14,7 @@ class RedBird(Bird):
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
+        static: bool = False,  # Agrega el parámetro static
     ):
         super().__init__(
             "assets/img/red-bird3.png",
@@ -28,4 +29,5 @@ class RedBird(Bird):
             elasticity,
             friction,
             collision_layer,
+            static,  # Pasa static al padre
         )

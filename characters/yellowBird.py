@@ -14,9 +14,10 @@ class YellowBird(Bird):
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
+        static: bool = False,  # Agrega el parámetro static
     ):
         super().__init__(
-            "assets/img/yellow-bird.png",
+            "assets/img/chuck.png",
             impulse_vector,
             x,
             y,
@@ -28,6 +29,7 @@ class YellowBird(Bird):
             elasticity,
             friction,
             collision_layer,
+            static,  # Pasa static al padre
         )
 
     def activate_special(self):
