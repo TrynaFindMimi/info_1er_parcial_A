@@ -7,16 +7,19 @@ from characters.redBird import RedBird
 def get_objects(space):
     """Devuelve los sprites para el nivel 1 (estructura triangular)."""
     objects = [
-        # Honda al extremo izquierdo
         Sling(space, x=200, y=138),
-        # Pájaro inicial en la honda
-        RedBird(impulse_vector=None, x=50, y=138, space=space, power_multiplier=0, static=True),
-        # Estructura triangular
-        Pig(x=870, y=190, space=space),  # Base izquierda
-        Pig(x=930, y=190, space=space),  # Base derecha
-        Pig(x=900, y=240, space=space),  # Cima
-        Column(x=870, y=190, space=space),  # Soporte izquierda
-        Column(x=930, y=190, space=space),  # Soporte derecha
-        PassiveObject(image_path="assets/img/beam.png", x=900, y=215, space=space)  # Bloque central
+        Column(x=927, y=190, space=space), 
+        Pig(x=997, y=200, space=space),
+        Column(x=1015, y=190, space=space),
+        Column(x=1035, y=190, space=space), 
+        Pig(x=1047, y=200, space=space),
+        Column(x=1105, y=190, space=space), 
+        PassiveObject("assets/img/beam.png", x=975, y=250, space=space, collision_layer=1),
+        PassiveObject("assets/img/beam.png", x=1075, y=250, space=space, collision_layer=1),
+        Column(x=995, y=310, space=space),
+        Pig(x=1037, y=350, space=space),
+        Column(x=1065, y=310, space=space),
+        PassiveObject("assets/img/beam.png", x=1035, y=400, space=space, collision_layer=1),
     ]
+
     return objects

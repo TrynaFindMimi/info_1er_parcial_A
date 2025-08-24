@@ -10,8 +10,8 @@ class PassiveObject(arcade.Sprite):
         y: float,
         space: pymunk.Space,
         mass: float = 2,
-        elasticity: float = 0.8,
-        friction: float = 1,
+        elasticity: float = 0.2,
+        friction: float = 8,
         collision_layer: int = 0,
     ):
         super().__init__("assets/img/beam.png", 1)
