@@ -14,7 +14,7 @@ class Bird(arcade.Sprite):
         mass: float = 5,
         radius: float = 12,
         max_impulse: float = 100,
-        power_multiplier: float = 30,
+        power_multiplier: float = 15,
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
@@ -57,5 +57,5 @@ class Bird(arcade.Sprite):
             self.time_low_energy = 0
 
     def activate_special(self):
-        
-        pass
+        if not self.should_remove:
+            self.body.apply_impulse_at_local_point(pymunk.Vec2d(0, 500))
