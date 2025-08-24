@@ -1,4 +1,5 @@
 import pymunk
+import math
 from characters.bird import Bird
 
 class BlueBird(Bird):
@@ -35,22 +36,44 @@ class BlueBird(Bird):
 
     def activate_special(self):
         """Divide el pájaro en 3 con trayectorias divergentes al hacer clic izquierdo mientras está en vuelo."""
-        if self.body.velocity.length > 0:  # Verifica si el pájaro está en vuelo
-            angle = self.body.angle
+        print(f"Activating BlueBird special. Current velocity length: {self.body.velocity.length}")
+        new_birds = []  # Lista para retornar
+        if self.body.velocity.length > 10:  # Umbral para asegurar vuelo
             position = self.body.position
             velocity = self.body.velocity
-            # Crear tres pájaros con 30 grados de separación
-            for offset in [-0.5236, 0, 0.5236]:  # -30, 0, +30 grados en radianes
+            print(f"Creating 3 new BlueBirds at position {position} with base velocity {velocity}")
+
+            # Calcular la dirección actual (en radianes)
+            current_angle = math.atan2(velocity.y, velocity.x)
+            print(f"Current angle: {math.degrees(current_angle)} degrees")
+
+            # Definir offsets relativos a la dirección actual (-30°, 0°, +30°)
+            offsets = [-0.5236, 0, 0.5236]  # -30°, 0°, +30° en radianes
+            for i, offset in enumerate(offsets):
+                new_angle = current_angle + offset
+                # Offset en posición para evitar overlap (5 pixels en y por offset)
+                offset_pos_y = position.y + (i - 1) * 5  # -5, 0, +5 pixels
                 new_bird = BlueBird(
                     impulse_vector=None,
                     x=position.x,
-                    y=position.y,
+                    y=offset_pos_y,
                     space=self.shape.space,
                     mass=self.body.mass,
-                    radius=self.shape.radius
+                    radius=self.shape.radius,
+                    elasticity=self.shape.elasticity,
+                    friction=self.shape.friction,
+                    collision_layer=self.shape.collision_type
                 )
-                new_velocity = velocity.rotated(offset)
+                # Calcular nueva velocity rotada según el nuevo ángulo, manteniendo magnitud
+                magnitude = velocity.length
+                new_velocity = pymunk.Vec2d(magnitude * math.cos(new_angle), magnitude * math.sin(new_angle))
                 new_bird.body.velocity = new_velocity
-                self.shape.space.add(new_bird.body, new_bird.shape)
+                new_birds.append(new_bird)
+                print(f"New bird {i+1} created with velocity {new_velocity} at position ({position.x}, {offset_pos_y}), angle {math.degrees(new_angle)} degrees")
+
             # Remover el pájaro original
             self.should_remove = True
+            print("Original BlueBird marked for removal")
+        else:
+            print("BlueBird not in flight (velocity too low), special not activated")
+        return new_birds  # Retorna la lista (vacía si no en vuelo)

@@ -20,9 +20,7 @@ class Bird(arcade.Sprite):
         collision_layer: int = 0,
         static: bool = False,
     ):
-        
         super().__init__(image_path, 0.1) 
-    
         
         body_type = pymunk.Body.STATIC if static else pymunk.Body.DYNAMIC
         moment = pymunk.moment_for_circle(mass, 0, radius) if not static else float('inf')
@@ -36,7 +34,8 @@ class Bird(arcade.Sprite):
         self.body = body
         self.shape = shape
 
-        if not static:
+        # Solo aplica impulso si impulse_vector no es None
+        if impulse_vector is not None:
             impulse = min(max_impulse, impulse_vector.impulse) * power_multiplier
             impulse_pymunk = impulse * pymunk.Vec2d(1, 0)
             self.body.apply_impulse_at_local_point(impulse_pymunk.rotated(impulse_vector.angle))

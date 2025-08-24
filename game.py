@@ -121,15 +121,18 @@ class App(arcade.View):
             self.space.step(1 / 60.0)
             self.sprites.update(delta_time)
             
-            # Revisa si el pájaro actual ha aterrizado
-            if not self.birds or self.birds[-1].body.velocity.length < 50 or self.birds[-1].center_y < -100:
+            # Revisa si hay pájaros en vuelo para mantener is_bird_in_air
+            self.is_bird_in_air = any(bird.body.velocity.length > 50 for bird in self.birds)
+            if not self.birds or all(bird.body.velocity.length < 50 or bird.center_y < -100 for bird in self.birds):
                 self.can_launch_bird = True
-                self.is_bird_in_air = False
+                if not self.is_bird_in_air:  # Solo desactiva si no hay pájaros en vuelo
+                    self.is_bird_in_air = False
             
             for bird in self.birds[:]:
                 if getattr(bird, 'should_remove', False):
                     bird.remove_from_sprite_lists()
                     self.space.remove(bird.shape, bird.body)
+                    print(f"Removed bird: {type(bird).__name__}")
             if not self.world:
                 if self.birds:
                     self.next_level()
@@ -150,9 +153,17 @@ class App(arcade.View):
             
             # Caso 2: El pájaro está en el aire, activa la habilidad (segundo clic)
             elif self.is_bird_in_air and self.birds:
-                self.birds[-1].activate_special()
-                # Desactiva la habilidad después de usarla
-                self.is_bird_in_air = False
+                current_bird = self.birds[-1]
+                print(f"Attempting special for {type(current_bird).__name__} at position {current_bird.center_x}, {current_bird.center_y}")
+                new_birds = current_bird.activate_special()  # Llama al método especial
+                if new_birds:  # Si retorna una lista (e.g., BlueBird)
+                    print(f"Adding {len(new_birds)} new birds to sprites and birds")
+                    for new_bird in new_birds:
+                        self.sprites.append(new_bird)
+                        self.birds.append(new_bird)
+                else:
+                    print("No new birds created")
+                # No desactives is_bird_in_air aquí, lo manejará on_update
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
         """Maneja el arrastre del ratón para apuntar."""
@@ -174,6 +185,7 @@ class App(arcade.View):
                 self.current_bird_index += 1
                 self.can_launch_bird = False
                 self.is_bird_in_air = True # El pájaro está en el aire
+                print(f"Launched {bird_class.__name__}")
                 for sprite in self.birds[:]:
                     if getattr(sprite, 'static', False):
                         sprite.remove_from_sprite_lists()
