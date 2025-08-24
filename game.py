@@ -28,36 +28,41 @@ FLOOR_COLOR = (60, 179, 113)
 class App(arcade.View):
     def __init__(self):
         super().__init__()
+        print("Entering App __init__...")
         self.game_init()
 
     def game_init(self):
-        self.background = arcade.load_texture("assets/img/background3.png")
-        self.space = pymunk.Space()
-        self.space.gravity = (0, GRAVITY)
-        floor_body = pymunk.Body(body_type=pymunk.Body.STATIC)
-        floor_center_y = FLOOR_Y - FLOOR_HEIGHT / 2
-        floor_body.position = (WIDTH / 2, floor_center_y)
-        floor_shape = pymunk.Poly.create_box(floor_body, (WIDTH, FLOOR_HEIGHT))
-        floor_shape.friction = 10.0
-        floor_shape.elasticity = 0.0
-        floor_shape.collision_type = 1
-        self.space.add(floor_body, floor_shape)
-        self.floor_body = floor_body
-        self.floor_shape = floor_shape
-        self.sprites = arcade.SpriteList()
-        self.birds = arcade.SpriteList()
-        self.world = arcade.SpriteList()
-        self.current_level = 1
-        self.load_level(self.current_level)
-        self.bird_queue = [RedBird, BlueBird, YellowBird]
-        self.current_bird_index = 0
-        self.fixed_start = Point2D(200, FLOOR_Y + 25)
-        self.end_point = Point2D(200, 100)
-        self.draw_line = False
-        self.handler = self.space.add_default_collision_handler()
-        self.handler.post_solve = self.collision_handler
-        self.paused = False
-        self.score = 0
+        try:
+            self.background = arcade.load_texture("assets/img/background3.png")
+            self.space = pymunk.Space()
+            self.space.gravity = (0, GRAVITY)
+            floor_body = pymunk.Body(body_type=pymunk.Body.STATIC)
+            floor_center_y = FLOOR_Y - FLOOR_HEIGHT / 2
+            floor_body.position = (WIDTH / 2, floor_center_y)
+            floor_shape = pymunk.Poly.create_box(floor_body, (WIDTH, FLOOR_HEIGHT))
+            floor_shape.friction = 10.0
+            floor_shape.elasticity = 0.0
+            floor_shape.collision_type = 1
+            self.space.add(floor_body, floor_shape)
+            self.floor_body = floor_body
+            self.floor_shape = floor_shape
+            self.sprites = arcade.SpriteList()
+            self.birds = arcade.SpriteList()
+            self.world = arcade.SpriteList()
+            self.current_level = 1
+            self.load_level(self.current_level)
+            self.bird_queue = [RedBird, BlueBird, YellowBird]
+            self.current_bird_index = 0
+            self.fixed_start = Point2D(200, FLOOR_Y + 25)
+            self.end_point = Point2D(200, 100)
+            self.draw_line = False
+            self.handler = self.space.add_default_collision_handler()
+            self.handler.post_solve = self.collision_handler
+            self.paused = False
+            self.score = 0
+        except Exception as e:
+            logger.error(f"Initialization error: {e}")
+            print(f"Initialization error: {e}")
 
     def load_level(self, level_id):
         self.sprites.clear()
@@ -71,9 +76,9 @@ class App(arcade.View):
             elif isinstance(obj, (RedBird, BlueBird, YellowBird)):
                 self.birds.append(obj)
         self.current_bird_index = 0
+        print(f"Level {level_id} loaded successfully...")
 
     def collision_handler(self, arbiter, space, data):
-    
         impulse_norm = arbiter.total_impulse.length
         if impulse_norm < 100:
             return True
@@ -101,11 +106,14 @@ class App(arcade.View):
                     self.next_level()
 
     def on_mouse_press(self, x, y, button, modifiers):
-        """Maneja el clic del ratón para iniciar el lanzamiento."""
+        """Maneja el clic del ratón para iniciar el lanzamiento y activar habilidad especial."""
         if button == arcade.MOUSE_BUTTON_LEFT and not self.paused:
             self.end_point = Point2D(x, y)
             self.draw_line = True
             logger.debug(f"Start Point: {self.fixed_start}")
+            # Activar especial si el pájaro actual es BlueBird y está en vuelo
+            if self.birds and isinstance(self.birds[-1], BlueBird) and self.birds[-1].body.velocity.length > 0:
+                self.birds[-1].activate_special()
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
         """Maneja el arrastre del ratón para apuntar."""
