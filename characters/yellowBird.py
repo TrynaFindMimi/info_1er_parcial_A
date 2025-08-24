@@ -1,3 +1,5 @@
+import arcade
+import pymunk
 from characters.bird import Bird
 
 class YellowBird(Bird):
@@ -14,7 +16,7 @@ class YellowBird(Bird):
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
-        static: bool = False,  # Agrega el parámetro static
+        static: bool = False,
     ):
         super().__init__(
             "assets/img/chuck.png",
@@ -29,9 +31,9 @@ class YellowBird(Bird):
             elasticity,
             friction,
             collision_layer,
-            static,  # Pasa static al padre
+            static,
         )
 
     def activate_special(self):
-        """Aumenta la velocidad del pájaro."""
-        self.body.velocity = self.body.velocity * 2
+        if self.body.body_type == pymunk.Body.DYNAMIC:
+            self.body.velocity = self.body.velocity * 8
