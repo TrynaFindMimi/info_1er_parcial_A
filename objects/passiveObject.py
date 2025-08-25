@@ -1,6 +1,7 @@
 import arcade
 import pymunk
 from utils import create_box_body_and_shape
+COLLISION_LAYER = 1
 
 class PassiveObject(arcade.Sprite):
     def __init__(
@@ -12,7 +13,7 @@ class PassiveObject(arcade.Sprite):
         mass: float = 2,
         elasticity: float = 0.2,
         friction: float = 8,
-        collision_layer: int = 0,
+        collision_layer: int = COLLISION_LAYER,  
     ):
         #Inicializa el sprite con la imagen especificada y escala predeterminada
         super().__init__("assets/img/beam.png", 1)
