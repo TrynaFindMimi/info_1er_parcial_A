@@ -179,7 +179,7 @@ class App(arcade.View):
                     new_birds = current_bird.activate_special()
                     current_bird.special_activated = True
                     
-                    #Si la habilidad crea nuevos pájaros (ej. BlueBird), actualiza las listas
+                    #Si la habilidad crea nuevos pájaros, actualiza las listas
                     if new_birds:
                         current_bird.remove_from_sprite_lists()
                         self.space.remove(current_bird.shape, current_bird.body)
