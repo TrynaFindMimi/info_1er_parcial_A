@@ -2,7 +2,6 @@ from characters.pig import Pig
 from objects.column import Column
 from objects.passiveObject import PassiveObject
 from objects.sling import Sling
-from characters.redBird import RedBird
 
 def get_objects(space):
     """Devuelve los sprites para el nivel 1 (estructura triangular)."""

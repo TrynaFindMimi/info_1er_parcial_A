@@ -58,34 +58,23 @@ class App(arcade.View):
         self.floor_body = floor_body
         self.floor_shape = floor_shape
         
-        # Listas de sprites para organizar los objetos del juego
         self.sprites = arcade.SpriteList()
         self.birds = arcade.SpriteList()
         self.world = arcade.SpriteList()
         
-        # Configuración del nivel
-        self.current_level = 1
+
+        self.current_level = 3
         self.load_level(self.current_level)
         
-        # ----- CÓDIGO MODIFICADO AQUÍ -----
-        # Cola de pájaros y su estado actual (YellowBird, RedBird, BlueBird)
         self.bird_queue = [YellowBird, RedBird, BlueBird]
         self.current_bird_index = 0
-        
-        # Puntos para la catapulta y la línea de trayectoria
         self.fixed_start = Point2D(200, FLOOR_Y + 25)
         self.end_point = Point2D(200, 100)
         self.draw_line = False
-        
-        # Manejador de colisiones para detectar impactos
         self.handler = self.space.add_default_collision_handler()
         self.handler.post_solve = self.collision_handler
-        
-        # Estado del juego
         self.paused = False
         self.score = 0
-        
-        # Variables para el control de lanzamiento
         self.can_launch_bird = True
         self.is_bird_in_air = False
 
@@ -145,25 +134,23 @@ class App(arcade.View):
         o activa la habilidad especial si el pájaro está en el aire.
         """
         if button == arcade.MOUSE_BUTTON_LEFT and not self.paused:
-            # Caso 1: Se puede lanzar un pájaro (primer clic)
+
             if self.can_launch_bird:
                 self.end_point = Point2D(x, y)
                 self.draw_line = True
                 logger.debug(f"Start Point: {self.fixed_start}")
-            
-            # Caso 2: El pájaro está en el aire, activa la habilidad (segundo clic)
             elif self.is_bird_in_air and self.birds:
                 current_bird = self.birds[-1]
                 print(f"Attempting special for {type(current_bird).__name__} at position {current_bird.center_x}, {current_bird.center_y}")
-                new_birds = current_bird.activate_special()  # Llama al método especial
-                if new_birds:  # Si retorna una lista (e.g., BlueBird)
+                new_birds = current_bird.activate_special() 
+                if new_birds:  
                     print(f"Adding {len(new_birds)} new birds to sprites and birds")
                     for new_bird in new_birds:
                         self.sprites.append(new_bird)
                         self.birds.append(new_bird)
                 else:
                     print("No new birds created")
-                # No desactives is_bird_in_air aquí, lo manejará on_update
+            
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
         """Maneja el arrastre del ratón para apuntar."""
@@ -184,7 +171,7 @@ class App(arcade.View):
                 self.birds.append(bird)
                 self.current_bird_index += 1
                 self.can_launch_bird = False
-                self.is_bird_in_air = True # El pájaro está en el aire
+                self.is_bird_in_air = True 
                 print(f"Launched {bird_class.__name__}")
                 for sprite in self.birds[:]:
                     if getattr(sprite, 'static', False):
@@ -237,8 +224,18 @@ class App(arcade.View):
         
         arcade.draw_text(
             f"Score: {self.score}",
-            10, HEIGHT - 30,
-            arcade.color.WHITE, 24
+            10, 
+            HEIGHT - 30,
+            arcade.color.WHITE,
+            24
+        )
+
+        arcade.draw_text(
+            f"Level: {self.current_level}",
+            10,
+            HEIGHT - 60,
+            arcade.color.WHITE,
+            24
         )
         
         if self.paused:
@@ -258,6 +255,6 @@ class App(arcade.View):
         try:
             self.load_level(self.current_level)
         except FileNotFoundError:
-            # Muestra el mensaje de fin del juego
+
             arcade.draw_text("¡Juego completado!", WIDTH / 2, HEIGHT / 2, arcade.color.WHITE, 50, anchor_x="center")
             self.paused = True
