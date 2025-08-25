@@ -3,11 +3,6 @@ import pymunk
 from characters.bird import Bird
 
 class YellowBird(Bird):
-    """
-    Representa al pájaro amarillo con su habilidad especial.
-    Su habilidad especial (un segundo clic del ratón)
-    aumenta drásticamente su velocidad hacia abajo.
-    """
     def __init__(
         self,
         impulse_vector,
@@ -23,6 +18,7 @@ class YellowBird(Bird):
         collision_layer: int = 0,
         static: bool = False,
     ):
+        #Inicializa el pájaro amarillo heredando de Bird con valores específicos
         super().__init__(
             "assets/img/chuck.png",
             impulse_vector,
@@ -40,12 +36,10 @@ class YellowBird(Bird):
         )
 
     def activate_special(self):
-        """
-        Aumenta drásticamente la velocidad del pájaro amarillo
-        cuando se activa su habilidad especial.
-        """
+        #Verifica si el cuerpo es dinámico antes de modificar la velocidad
         if self.body.body_type == pymunk.Body.DYNAMIC:
             current_velocity = self.body.velocity
+            #Multiplica la velocidad horizontal por 8 y añade un impulso hacia abajo
             self.body.velocity = pymunk.Vec2d(current_velocity.x * 8, current_velocity.y - 800)
             
          

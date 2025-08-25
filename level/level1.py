@@ -5,7 +5,6 @@ from objects.sling import Sling
 from characters.redBird import RedBird
 
 def get_objects(space):
-    """Devuelve los sprites para el nivel 1 (estructura triangular)."""
     objects = [
         Sling(space, x=200, y=138),
         Column(x=927, y=190, space=space), 

@@ -14,8 +14,9 @@ class RedBird(Bird):
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
-        static: bool = False,  # Agrega el parámetro static
+        static: bool = False,
     ):
+        #Inicializa el pájaro rojo heredando de Bird con valores específicos
         super().__init__(
             "assets/img/red-bird3.png",
             impulse_vector,
@@ -29,5 +30,5 @@ class RedBird(Bird):
             elasticity,
             friction,
             collision_layer,
-            static,  # Pasa static al padre
+            static,
         )

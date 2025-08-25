@@ -20,12 +20,16 @@ class Bird(arcade.Sprite):
         collision_layer: int = 0,
         static: bool = False,
     ):
+        #Inicializa el sprite con la imagen y escala
         super().__init__(image_path, 0.1) 
         
+        #Configura el cuerpo físico cuando está estático y en movimiento
         body_type = pymunk.Body.STATIC if static else pymunk.Body.DYNAMIC
         moment = pymunk.moment_for_circle(mass, 0, radius) if not static else float('inf')
         body = pymunk.Body(mass, moment, body_type=body_type)
         body.position = (x, y)
+        
+        #Crea una forma circular para colaborar con el personaje en movimiento
         shape = pymunk.Circle(body, radius)
         shape.elasticity = elasticity
         shape.friction = friction
@@ -34,19 +38,23 @@ class Bird(arcade.Sprite):
         self.body = body
         self.shape = shape
 
-        # Solo aplica impulso si impulse_vector no es None
+        #Aplica un impulso si hay un vector de impulso
         if impulse_vector is not None:
             impulse = min(max_impulse, impulse_vector.impulse) * power_multiplier
             impulse_pymunk = impulse * pymunk.Vec2d(1, 0)
             self.body.apply_impulse_at_local_point(impulse_pymunk.rotated(impulse_vector.angle))
         
+        #Variables para controlar el tiempo de baja energía y eliminación
         self.time_low_energy = 0
         self.should_remove = False
 
     def update(self, delta_time):
+        #Actualiza la posición y rotación del sprite dependiendo del estado del cuerpo
         self.center_x = self.shape.body.position.x
         self.center_y = self.shape.body.position.y
         self.radians = self.shape.body.angle
+        
+        #Comprueba si la velocidad es baja para eliminar el cuerpo
         velocity = self.body.velocity.length
         if velocity < 20:
             self.time_low_energy += delta_time
@@ -56,5 +64,6 @@ class Bird(arcade.Sprite):
             self.time_low_energy = 0
 
     def activate_special(self):
+        #Aplica un impulso vertical si el objeto no está marcado para eliminación
         if not self.should_remove:
             self.body.apply_impulse_at_local_point(pymunk.Vec2d(0, 500))
